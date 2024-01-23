@@ -1,6 +1,6 @@
 from math import floor
 
-import aoc
+import ivan.aoc as aoc
 
 inp = [int(mass) for mass in aoc.get_input(2019, 1).splitlines()]
 
