@@ -29,6 +29,9 @@ class Computer:
 
     def _compute(self, noun: int = 0, verb: int = 0):
         """Compute the result of the Intcode program with the given noun and verb."""
+        assert 0 <= noun <= 99
+        assert 0 <= verb <= 99
+        
         _memory = copy.deepcopy(self.memory)
         _memory[1], _memory[2] = noun, verb
         memory_iter = iter(_memory)
