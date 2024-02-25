@@ -16,64 +16,86 @@ class Computer:
     def get_input(self, year: int, day: int):
         return ivan.aoc.get_input(year, day)
 
-    def parse_str_into_memory(self, inp: str, as_array_of_int: bool):
-        if not as_array_of_int:
-            self._memory = inp.split(",")
-        else:
-            self._memory = array("i", (int(i) for i in inp.split(",")))
+    def parse_str_into_memory(self, inp: str):
+        self._memory = array("i", (int(i) for i in inp.split(",")))
 
-    def _compute(self, program):
-        """Compute an Intcode program"""
+    def _compute(self, program: array):
+        """Compute an Intcode program and return it back."""
+        pointer = 0
+        valid_opcodes = (1, 2, 3, 4, 99)
+        valid_param_modes = (0, 1)
 
-        def exec_instruction(opcode, param1_mode, param2_mode):
-            a = next(program_iter)
-            if param1_mode == 0:
+        def exec_instruction(opcode: int, param_modes: tuple):
+            if len(param_modes) == 0:
+                param_modes = (0, 0)
+            elif len(param_modes) == 1:
+                param_modes = (param_modes[0], 0)
+            elif len(param_modes) == 2:
+                param_modes = (param_modes[0], param_modes[1])
+            else:
+                raise ValueError("Invalid param_modes")
+
+            a = program[pointer + 1]
+            if param_modes[0] == 0:
                 a = program[a]
 
-            b = next(program_iter)
-            if param2_mode == 0:
+            b = program[pointer + 2]
+            if param_modes[1] == 0:
                 b = program[b]
 
-            pos = next(program_iter)
+            pos = program[pointer + 3]
 
             if opcode == 1:
                 program[pos] = a + b
             elif opcode == 2:
                 program[pos] = a * b
 
-        program_iter = iter(program)
+            # for debugging
+            # print(f"{opcode=}, {param_modes=}, {a=}, {b=}, {pos=}, {program[pos]=}")
 
         while True:
             try:
-                value = next(program_iter)
-
-                opcode_str = str(value)
-                opcode_length = len(opcode_str)
-                if opcode_length <= 2:
-                    param1_mode, param2_mode, opcode = 0, 0, value
-                elif opcode_length == 4:
-                    param2_mode, param1_mode, _, opcode = (int(i) for i in opcode_str)
+                opcode = program[pointer]
+                # Handling parameter modes
+                opcode_str = str(opcode)
+                if len(opcode_str) == 1:
+                    param_modes, opcode = (0, 0), opcode
                 else:
-                    opcode = None
+                    opcode = int(opcode_str[-2:])
+                    param_modes = tuple(int(p) for p in opcode_str[:-2][::-1])
+
+                assert opcode in valid_opcodes
+                assert set(param_modes).issubset(valid_param_modes)
 
                 if opcode == 1:  # opcode: sum
-                    exec_instruction(opcode, param1_mode, param2_mode)
+                    exec_instruction(opcode, param_modes)
+                    pointer += 4
                     continue
                 elif opcode == 2:  # opcode: mul
-                    exec_instruction(opcode, param1_mode, param2_mode)
+                    exec_instruction(opcode, param_modes)
+                    pointer += 4
                     continue
                 elif opcode == 3:  # opcode: input
                     inp = int(input("Provide input: "))
-                    pos = next(program_iter)
-                    program[pos] = inp
+                    idx = program[pointer + 1]
+                    program[idx] = inp
+                    pointer += 2
                     continue
                 elif opcode == 4:  # opcode: output
-                    pos = next(program_iter)
-                    print(program[pos])
+                    idx = program[pointer + 1]
+                    if param_modes == (1,):
+                        result = idx
+                    else:
+                        result = program[idx]
+                    print(f"{pointer=}, {result}")
+
+                    pointer += 2
                     continue
                 elif opcode == 99:  # opcode: halt
                     break
-            except StopIteration:
+                else:
+                    pointer += 1
+            except IndexError:
                 break
         return program
 
@@ -102,8 +124,7 @@ class Computer:
 if __name__ == "__main__":
     c = Computer()
 
-    c.parse_str_into_memory(c.get_input(2019, 2), as_array_of_int=True)
-
+    c.parse_str_into_memory(c.get_input(2019, 2))
     d2p1 = c.exec_day2p1()
     print(f"Solution Day 2, part 1: {d2p1}")
     assert d2p1 == 4690667
@@ -113,5 +134,5 @@ if __name__ == "__main__":
     print(f"Solution Day 2, part 2: {n=}, {v=}, Result: {100 * n + v}")
     assert d2p2 == (62, 55, 6255)
 
-    # c.parse_aoc_input(2019, 5)
-    # c.exec_day5p1()
+    c.parse_str_into_memory(c.get_input(2019, 5))
+    c.exec_day5p1()
