@@ -13,17 +13,17 @@ class Computer:
     def memory(self):
         return self._memory
 
-    def get_input(self, year: int, day: int):
+    def get_input(self, year: int, day: int) -> str:
         return ivan.aoc.get_input(year, day)
 
-    def parse_str_into_memory(self, inp: str):
+    def parse_str_into_memory(self, inp: str) -> None:
         self._memory = array("i", (int(i) for i in inp.split(",")))
 
-    def _compute(self, program: array):
-        """Compute an Intcode program and return it back."""
+    def _compute(self, program: array) -> array:
+        """Compute instructions on Intcode program and return computed (modified) program back."""
         pointer = 0
-        valid_opcodes = (1, 2, 3, 4, 99)
-        valid_param_modes = (0, 1)
+        valid_opcodes = {1, 2, 3, 4, 99}
+        valid_param_modes = {0, 1}
 
         def exec_instruction(opcode: int, param_modes: tuple):
             if len(param_modes) == 0:
@@ -76,7 +76,7 @@ class Computer:
                     pointer += 4
                     continue
                 elif opcode == 3:  # opcode: input
-                    inp = int(input("Provide input: "))
+                    inp = int(input(f"Provide input at {pointer=}: "))
                     idx = program[pointer + 1]
                     program[idx] = inp
                     pointer += 2
@@ -87,7 +87,7 @@ class Computer:
                         result = idx
                     else:
                         result = program[idx]
-                    print(f"{pointer=}, {result}")
+                    print(f"{pointer=}; Output: {result}")
 
                     pointer += 2
                     continue
